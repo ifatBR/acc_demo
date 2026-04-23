@@ -1,23 +1,36 @@
-import { AUTODESK_BASIC_URL, AUTODEKS_APIS } from '../../apis/autodeskApis';
+import { AUTODESK_BASIC_URL, AUTODEKS_APIS } from "../../apis/autodeskApis";
 let apsToken: { value: string; expiresAt: number } | null = null;
 let tokenPromise: Promise<string> | null = null;
 
 export async function requestApsToken(scope?: string[]) {
   const basic = Buffer.from(
     `${process.env.APS_CLIENT_ID}:${process.env.APS_CLIENT_SECRET}`,
-  ).toString('base64');
+  ).toString("base64");
 
-  const res = await fetch(`${AUTODESK_BASIC_URL}${AUTODEKS_APIS.getToken}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${basic}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'client_credentials',
-      scope: scope?.join(' ') || 'data:read data:write data:create bucket:create bucket:read',
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${AUTODESK_BASIC_URL}${AUTODEKS_APIS.getToken}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        region: "EMEA",
+      },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        scope:
+          scope?.join(" ") ||
+          "data:read data:write data:create bucket:create bucket:read",
+      }),
+    });
+  } catch (err) {
+    throw new Error(`Network error requesting APS token: ${(err as Error).message}`);
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`APS token request failed: ${res.status} ${res.statusText}${body ? ` — ${body}` : ""}`);
+  }
 
   return res.json();
 }

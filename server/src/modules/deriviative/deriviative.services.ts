@@ -4,29 +4,35 @@ import { uploadFile } from "@modules/bucket/bucket.service";
 
 export async function translateObject(objectId: string) {
   const accessToken = await getApsToken();
-  const urn = Buffer.from(objectId)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
+  const urn = Buffer.from(objectId).toString("base64");
 
-  await fetch(
-    `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.DERIVIATIVE.translateObject}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        region: "EMEA",
-      },
-      body: JSON.stringify({
-        input: { urn },
-        output: {
-          formats: [{ type: "svf", views: ["2d", "3d"] }],
+  let res: Response;
+  try {
+    res = await fetch(
+      `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.DERIVIATIVE.translateObject}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          region: "EMEA",
         },
-      }),
-    },
-  );
+        body: JSON.stringify({
+          input: { urn },
+          output: {
+            formats: [{ type: "svf", views: ["2d", "3d"] }],
+          },
+        }),
+      },
+    );
+  } catch (err) {
+    throw new Error(`Network error translating object: ${err}`);
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to translate object: ${res.status} ${body}`);
+  }
 
   return { urn };
 }
@@ -34,17 +40,31 @@ export async function translateObject(objectId: string) {
 export async function getManifest(urn: string) {
   const accessToken = await getApsToken();
 
-  const res = await fetch(
-    `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.DERIVIATIVE.getManifest(urn)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        region: "EMEA",
+  let res: Response;
+  try {
+    res = await fetch(
+      `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.DERIVIATIVE.getManifest(urn)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          region: "EMEA",
+        },
       },
-    },
-  );
+    );
+  } catch (err) {
+    throw new Error(`Network error fetching manifest: ${err}`);
+  }
 
-  return res.json();
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to get manifest: ${res.status} ${body}`);
+  }
+
+  try {
+    return await res.json();
+  } catch {
+    throw new Error("Invalid JSON in manifest response");
+  }
 }
 
 export async function uploadUserModel(fileBuffer: Buffer, fileName: string) {
