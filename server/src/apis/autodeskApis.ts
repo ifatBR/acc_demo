@@ -6,6 +6,8 @@ export const AUTODEKS_APIS = {
     getSignedS3Upload: (bucketKey: string, objectKey: string) =>
       `/oss/v2/buckets/${bucketKey}/objects/${objectKey}/signeds3upload`,
     listObjects: (bucketKey: string) => `oss/v2/buckets/${bucketKey}/objects`,
+    deleteObject: (bucketKey: string, objectKey: string) =>
+      `/oss/v2/buckets/${bucketKey}/objects/${objectKey}`,
   },
   DERIVIATIVE: {
     translateObject: "modelderivative/v2/designdata/job",

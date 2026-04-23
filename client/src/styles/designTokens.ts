@@ -1,10 +1,11 @@
 const _blue900 = "#021947";
 const _blue700 = "#062273";
 const _blue100 = "#e0e0f5";
-const _teal400 = "#45C9B2";
-const _teal300 = "#35b09b";
+const _teal300 = "#45C9B2";
+const _teal400 = "#35b09b";
 const _teal100 = "#E0F7F4";
-const _lime600 = "#48C96D";
+const _lime700 = "#64a718";
+const _lime600 = "#51c948";
 const _lime400 = "#AEE553";
 const _lime200 = "#cff690";
 const _red400 = "#FF6B6B";
@@ -19,7 +20,8 @@ const _gray100 = "#F5F5F5";
 const _gray200 = "#EEEEEE";
 const _gray300 = "#DDDDDD";
 const _gray500 = "#9E9E9E";
-const _gray600 = "#6B6B6B";
+const _gray600 = "#414040";
+const _gray800 = "#2f2e2e";
 const _gray900 = "#1A1A1A";
 const _black = "#09090b";
 
@@ -35,13 +37,13 @@ export const COLORS = {
     light: _teal100,
   },
   highlight: {
-    dark: _lime600,
+    dark: _gray600,
     default: _lime400,
     secondary: _lime200,
-    tertiary: _gray200,
+    tertiary: _gray800,
   },
   palette: {
-    1: _teal400,
+    1: _teal300,
     2: _red400,
     3: _yellow400,
     4: _purple400,
@@ -155,7 +157,7 @@ export const RADII = {
 } as const;
 
 export const SHADOWS = {
-  sm: "0 1px 2px rgba(255, 255, 255, 0.06)",
+  sm: "0 1px 2px rgba(255, 255, 255, 0.3)",
   md: "0 2px 8px rgba(255, 255, 255,1)",
   lg: "0 4px 16px rgba(255, 255, 255,0.10)",
   sidebar: "1px 0 10px rgba(255, 255, 255,0.06)",

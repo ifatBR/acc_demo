@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { uploadFile, listObjects } from "./bucket.service";
+import { uploadFile, listObjects, deleteObject } from "./bucket.service";
 
 //Test endpoint separately
 
@@ -20,4 +20,16 @@ export async function bucketRoutes(app: FastifyInstance) {
   });
 
   app.get("/objects", async () => listObjects());
+
+  app.delete<{ Params: { objectKey: string } }>(
+    "/object/:objectKey",
+    (req, reply) => {
+      const { objectKey } = req.params;
+
+      if (!objectKey) {
+        return reply.code(400).send({ error: "No objectKey sent" });
+      }
+      return deleteObject(objectKey);
+    },
+  );
 }

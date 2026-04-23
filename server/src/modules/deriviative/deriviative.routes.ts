@@ -19,7 +19,6 @@ export async function deriviativeRoutes(app: FastifyInstance) {
   // Upload endpoint for viewer
 
   app.post<{ Body: { urn: string } }>("/models/upload", async (req, reply) => {
-    console.log(">>>req:", req);
     const file = await req.file({
       limits: {
         fileSize: 100 * 1024 * 1024,

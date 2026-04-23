@@ -44,7 +44,7 @@ async function get<T>(path: string): Promise<T> {
 export const fetchHubs = () => get<Hub[]>("/hubs");
 
 export const fetchProjects = (hubId: string) =>
-  get<Project[]>(`/hubs/${hubId}/projects`);
+  get<Project[]>(`/buckets/objects`);
 
 export const fetchTopFolders = (hubId: string, projectId: string) =>
   get<TopFolder[]>(`/hubs/${hubId}/projects/${projectId}/topFolders`);

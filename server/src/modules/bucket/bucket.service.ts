@@ -1,10 +1,10 @@
 import { getApsToken } from "@modules/auth/auth.service";
 import { AUTODESK_BASIC_URL, AUTODEKS_APIS } from "../../apis/autodeskApis";
+import { formattedObjects } from "./bucket.domain";
 
 export async function uploadFile(fileBuffer: Buffer, fileName: string) {
   const accessToken = await getApsToken();
   const bucketKey = process.env.BUCKET_KEY;
-  console.log(">>>bucketKey:", bucketKey);
   if (!bucketKey) throw new Error("Missing bucket key");
 
   let getRes: Response;
@@ -23,11 +23,12 @@ export async function uploadFile(fileBuffer: Buffer, fileName: string) {
   } catch (err) {
     throw new Error(`Network error fetching signed upload URL: ${err}`);
   }
-  console.log(">>getRes:", getRes);
 
   if (!getRes.ok) {
     const body = await getRes.text().catch(() => "");
-    throw new Error(`Failed to get signed upload URL: ${getRes.status} ${body}`);
+    throw new Error(
+      `Failed to get signed upload URL: ${getRes.status} ${body}`,
+    );
   }
 
   let getData: { uploadKey: string; urls: string[] };
@@ -110,8 +111,42 @@ export async function listObjects() {
   }
 
   try {
-    return await res.json();
+    const { items } = await res.json();
+    return formattedObjects(items);
   } catch {
     throw new Error("Invalid JSON in list objects response");
+  }
+}
+
+export async function deleteObject(ObjectKey: string) {
+  const accessToken = await getApsToken();
+
+  const bucketKey = process.env.BUCKET_KEY;
+  if (!bucketKey) throw new Error("Missing bucket key");
+
+  let res: Response;
+  try {
+    res = await fetch(
+      `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.OSS.deleteObject(bucketKey, encodeURIComponent(ObjectKey))}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+  } catch (err) {
+    throw new Error(`Network error deleting object: ${err}`);
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to delete object: ${res.status} ${body}`);
+  }
+
+  try {
+    return { success: true };
+  } catch {
+    throw new Error("Invalid JSON in delete object response");
   }
 }
