@@ -5,17 +5,23 @@ import type { TreeCollection } from "@ark-ui/react/collection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBucketObjects, deleteObjectById } from "@/api/bucket";
 import type { BucketObject } from "@/api/bucket";
+import { createProject } from "@/api/project";
 import { ViewerModal } from "./components/ViewerModal";
+import { CreateProjectDialog } from "./components/CreateProjectDialog";
 import { Buffer } from "buffer";
 import { BrowserTree } from "./components/BrowserTree";
+import { BodyText, SectionTitle } from "@/components/Typography";
+import { Button } from "@/components/Button";
+import { Plus } from "lucide-react";
+import { SPACING } from "@/styles/designTokens";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type BrowserNodeType = "project" | "folder" | "file";
 
 export type BrowserNode = {
-  value: string; // unique key within the collection
-  label: string; // display name
+  value: string;
+  label: string;
   nodeType: BrowserNodeType;
   objectId?: string;
   children?: BrowserNode[];
@@ -113,14 +119,14 @@ function resolveObjectKeys(node: BrowserNode): string[] {
 
   if (node.nodeType === "folder") {
     if (!node.children || node.children.length === 0) {
-      return [`${node.value}/.placeholder`];
+      return [node.value];
     }
     return node.children.map((child) => child.value);
   }
 
   // project
   if (!node.children || node.children.length === 0) {
-    return [`${node.value}/.placeholder`];
+    return [node.value];
   }
   return node.children.flatMap((child) => resolveObjectKeys(child));
 }
@@ -141,8 +147,11 @@ export function BrowserPage() {
 
   const [urn, setUrn] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const collection = buildCollection(objects ? parseBucketObjects(objects) : []);
+  const collection = buildCollection(
+    objects ? parseBucketObjects(objects) : [],
+  );
 
   const viewItem = (node: BrowserNode) => {
     if (!node.objectId) return;
@@ -155,6 +164,12 @@ export function BrowserPage() {
     const objectKeys = resolveObjectKeys(node);
     await Promise.all(objectKeys.map(deleteObjectById));
     queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
+  };
+
+  const createNewProject = async (name: string) => {
+    await createProject({ projectName: name });
+    queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
+    setIsCreateOpen(false);
   };
 
   if (isLoading) {
@@ -175,7 +190,7 @@ export function BrowserPage() {
     );
   }
 
-  return (
+  return objects?.length ? (
     <Box h="full">
       <BrowserTree
         collection={collection}
@@ -184,5 +199,21 @@ export function BrowserPage() {
       />
       <ViewerModal fileName={previewFileName} browseUrn={urn} setUrn={setUrn} />
     </Box>
+  ) : (
+    <Flex h="100vh" align="center" justify="center" direction="column">
+      <SectionTitle>No projects created yet</SectionTitle>
+      <BodyText secondary>
+        Click on the button below to add a new project
+      </BodyText>
+      <Button mt={SPACING[4]} onClick={() => setIsCreateOpen(true)}>
+        <Plus />
+        New Project
+      </Button>
+      <CreateProjectDialog
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onConfirm={createNewProject}
+      />
+    </Flex>
   );
 }

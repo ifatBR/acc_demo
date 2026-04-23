@@ -9,7 +9,8 @@
     "strict": true,
     "types": ["node"],
     "paths": {
-      "@modules/*": ["./src/modules/*"]
+      "@modules/*": ["./src/modules/*"],
+      "@assets/*": ["./src/assets/*"]
     }
   },
   "include": ["src/**/*.ts"],

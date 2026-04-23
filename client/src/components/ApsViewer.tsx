@@ -39,7 +39,6 @@ export function ApsViewer({ urn, setIsLoading, onError }: ApsViewerProps) {
           containerRef.current,
         );
 
-        console.log("viewer:", viewer);
         viewerRef.current = viewer;
         if (!viewer) return;
         viewer.start();
@@ -47,7 +46,7 @@ export function ApsViewer({ urn, setIsLoading, onError }: ApsViewerProps) {
         toolbarCleanupRef.current = setupViewerToolbar(viewer, onClickBtn);
 
         setIsLoading(false);
-        console.log("urn:", urn);
+
         window.Autodesk.Viewing.Document.load(
           `urn:${urn}`,
           (doc: any) => {

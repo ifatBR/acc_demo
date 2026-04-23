@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 import { Heading, Text } from "@chakra-ui/react";
-import { COLORS, FONT_SIZES, FONT_WEIGHTS } from "@/styles/designTokens";
+import {
+  COLORS,
+  FONT_SIZES,
+  FONT_WEIGHTS,
+  SPACING,
+} from "@/styles/designTokens";
 
 interface ChildrenProps {
   children: ReactNode;
@@ -76,10 +81,12 @@ interface ErorTextProps extends ChildrenProps {
 export function ErrorText({ children, bold }: ErorTextProps) {
   return (
     <Text
+      role="alert"
       as="span"
       fontSize={FONT_SIZES.sm}
       fontWeight={bold ? FONT_WEIGHTS.bold : FONT_WEIGHTS.regular}
       color={COLORS.semantic.error}
+      mt={SPACING[2]}
     >
       {children}
     </Text>

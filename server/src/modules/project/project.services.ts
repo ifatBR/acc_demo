@@ -1,6 +1,8 @@
 import { getApsToken } from "@modules/auth/auth.service";
 import { AUTODEKS_APIS, AUTODESK_BASIC_URL } from "../../apis/autodeskApis";
 import { uploadFile } from "@modules/bucket/bucket.service";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export async function translateObject(objectId: string) {
   const accessToken = await getApsToken();
@@ -67,7 +69,13 @@ export async function getManifest(urn: string) {
   }
 }
 
-export async function uploadUserModel(fileBuffer: Buffer, fileName: string) {
+export async function createNewProject(projectName: string) {
+  const filePath = path.resolve(__dirname, "../../assets/.placeholder");
+  const fileBuffer = await readFile(filePath);
+  return await uploadFile(fileBuffer, projectName);
+}
+
+export async function uploadUserFile(fileBuffer: Buffer, fileName: string) {
   const fileData = await uploadFile(fileBuffer, fileName);
   const { objectId } = fileData;
   const translatedFile = await translateObject(objectId);

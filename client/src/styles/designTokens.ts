@@ -4,8 +4,8 @@ const _blue100 = "#e0e0f5";
 const _teal300 = "#45C9B2";
 const _teal400 = "#35b09b";
 const _teal100 = "#E0F7F4";
-const _lime700 = "#64a718";
-const _lime600 = "#51c948";
+const _lime700 = "rgb(39, 105, 12)";
+const _lime600 = "#547c13";
 const _lime400 = "#AEE553";
 const _lime200 = "#cff690";
 const _red400 = "#FF6B6B";
@@ -19,6 +19,7 @@ const _gray50 = "#F8F8F8";
 const _gray100 = "#F5F5F5";
 const _gray200 = "#EEEEEE";
 const _gray300 = "#DDDDDD";
+const _gray400 = "#bfbcbc";
 const _gray500 = "#9E9E9E";
 const _gray600 = "#414040";
 const _gray800 = "#2f2e2e";
@@ -53,18 +54,18 @@ export const COLORS = {
   },
   bg: {
     base: _black,
-    surface: _white,
-    elevated: _white,
+    surface: _gray900,
+    elevated: _gray800,
   },
   text: {
-    primary: _gray900,
-    secondary: _gray600,
+    primary: _gray50,
+    secondary: _gray400,
     tertiary: _gray500,
-    inverse: _white,
+    inverse: _gray900,
   },
   border: {
-    default: _gray200,
-    strong: _gray300,
+    default: _gray100,
+    strong: _gray50,
   },
   semantic: {
     error: _red400,
@@ -84,12 +85,12 @@ export const COLORS = {
     itemHoverBg: _gray100,
   },
   btn: {
-    primary: { bg: _gray900, color: _white, hoverBg: _blue700 },
+    primary: { bg: _lime600, color: _gray50, hoverBg: _lime700 },
     secondary: {
       bg: "transparent",
-      color: _blue900,
-      border: _blue900,
-      hoverBg: _blue100,
+      color: _gray50,
+      border: _gray50,
+      hoverBg: _lime700,
     },
     danger: { bg: _red400, color: _white, hoverBg: _red300 },
     disabled: { bg: _gray200, color: _gray500 },

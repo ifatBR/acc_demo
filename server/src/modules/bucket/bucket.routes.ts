@@ -4,19 +4,24 @@ import { uploadFile, listObjects, deleteObject } from "./bucket.service";
 //Test endpoint separately
 
 export async function bucketRoutes(app: FastifyInstance) {
-  app.post("/upload", async (req, reply) => {
+  app.post<{ Body: { fileName: string } }>("/upload", async (req, reply) => {
     const file = await req.file({
       limits: {
         fileSize: 100 * 1024 * 1024,
       },
     });
+    const { fileName } = req.body;
 
     if (!file) {
       return reply.code(400).send({ error: "No file uploaded" });
     }
 
+    if (!fileName) {
+      return reply.code(400).send({ error: "File name missing" });
+    }
+
     const fileBuffer = await file.toBuffer();
-    return uploadFile(fileBuffer, file.filename);
+    return uploadFile(fileBuffer, fileName);
   });
 
   app.get("/objects", async () => listObjects());
