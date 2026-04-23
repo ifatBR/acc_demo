@@ -9,7 +9,6 @@
     "strict": true,
     "types": ["node"],
     "paths": {
-      "@app/types/*": ["../packages/types/*"],
       "@modules/*": ["./src/modules/*"]
     }
   },

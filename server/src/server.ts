@@ -2,6 +2,7 @@ import "dotenv/config";
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import cors from "@fastify/cors";
+import apiRoutes from "./routes/api";
 
 const app = Fastify({
   logger: true,
@@ -10,6 +11,7 @@ const app = Fastify({
 
 app.register(multipart);
 app.register(cors, { origin: ["http://localhost:5173"] });
+app.register(apiRoutes, { prefix: "/api/v1" });
 app.listen({ port: 3000 }, function (err, address) {
   if (err) {
     app.log.error(err);
