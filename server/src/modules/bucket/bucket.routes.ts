@@ -1,13 +1,9 @@
 import { FastifyInstance } from "fastify";
-import { createBucket, uploadFile, listObjects } from "./bucket.service";
+import { uploadFile, listObjects } from "./bucket.service";
 
 //Test endpoint separately
 
 export async function bucketRoutes(app: FastifyInstance) {
-  app.post("/createBucket", async () => {
-    return createBucket();
-  });
-
   app.post("/upload", async (req, reply) => {
     const file = await req.file({
       limits: {
