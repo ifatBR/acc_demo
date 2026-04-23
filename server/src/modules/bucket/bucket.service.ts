@@ -45,6 +45,7 @@ export async function uploadFile(fileBuffer: Buffer, fileName: string) {
     s3Res = await fetch(urls[0], {
       method: "PUT",
       body: new Uint8Array(fileBuffer),
+      headers: { region: "EMEA" },
     });
   } catch (err) {
     throw new Error(`Network error uploading to S3: ${err}`);

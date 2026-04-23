@@ -12,8 +12,8 @@ export async function projectRoutes(app: FastifyInstance) {
     return translateObject(objectId);
   });
 
-  app.post<{ Body: { urn: string } }>("/manifest", async (req) => {
-    const { urn } = req.body;
+  app.get<{ Params: { urn: string } }>("/manifest/:urn", async (req) => {
+    const { urn } = req.params;
     return getManifest(urn);
   });
 
@@ -49,7 +49,6 @@ export async function projectRoutes(app: FastifyInstance) {
     if (!fileName) {
       return reply.code(400).send({ error: "File name missing" });
     }
-    console.log("<<<<<fileName:", fileName);
     return uploadUserFile(fileBuffer, fileName);
   });
 }

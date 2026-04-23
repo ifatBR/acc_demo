@@ -5,14 +5,14 @@ import { getAccessToken } from "@/api/auth";
 import { setupViewerToolbar } from "@/utils/viewer.utils";
 import { useLayout } from "@/context/LayoutContext";
 import { SIDEBAR } from "@/styles/designTokens";
+import "@/styles/css/ViewerButton.scss";
 
 interface ApsViewerProps {
   urn: string | null;
-  setIsLoading: (val: boolean) => void;
   onError?: (err?: string) => void;
 }
 
-export function ApsViewer({ urn, setIsLoading, onError }: ApsViewerProps) {
+export function ApsViewer({ urn, onError }: ApsViewerProps) {
   const [showFish, setShowFish] = useState<boolean>(false);
   const { isCollapsed } = useLayout();
 
@@ -27,37 +27,42 @@ export function ApsViewer({ urn, setIsLoading, onError }: ApsViewerProps) {
   useEffect(() => {
     let cancelled = false;
     async function initViewer() {
-      if (!containerRef.current || !window.Autodesk) onError?.();
+      if (!containerRef.current || !window.Autodesk || !urn) onError?.();
 
       if (cancelled) onError?.();
       const accessToken = await getAccessToken();
       if (!accessToken) onError?.();
 
-      window.Autodesk.Viewing.Initializer({ accessToken: accessToken }, () => {
-        if (!containerRef.current || cancelled) return;
-        const viewer = new window.Autodesk.Viewing.GuiViewer3D(
-          containerRef.current,
-        );
+      window.Autodesk.Viewing.Initializer(
+        {
+          accessToken: accessToken,
+          env: "AutodeskProduction2",
+          api: "streamingV2_EU",
+        },
+        () => {
+          if (!containerRef.current || cancelled) return;
+          const viewer = new window.Autodesk.Viewing.GuiViewer3D(
+            containerRef.current,
+          );
 
-        viewerRef.current = viewer;
-        if (!viewer) return;
-        viewer.start();
+          viewerRef.current = viewer;
+          if (!viewer) return;
+          viewer.start();
 
-        toolbarCleanupRef.current = setupViewerToolbar(viewer, onClickBtn);
+          toolbarCleanupRef.current = setupViewerToolbar(viewer, onClickBtn);
 
-        setIsLoading(false);
-
-        window.Autodesk.Viewing.Document.load(
-          `urn:${urn}`,
-          (doc: any) => {
-            const defaultModel = doc.getRoot().getDefaultGeometry();
-            viewer.loadDocumentNode(doc, defaultModel);
-          },
-          (errCode: number, errMsg: string) => {
-            console.error("Viewer load error:", errCode, errMsg);
-          },
-        );
-      });
+          window.Autodesk.Viewing.Document.load(
+            `urn:${urn}`,
+            (doc: any) => {
+              const defaultModel = doc.getRoot().getDefaultGeometry();
+              viewer.loadDocumentNode(doc, defaultModel);
+            },
+            (errCode: number, errMsg: string) => {
+              console.error("Viewer load error:", errCode, errMsg);
+            },
+          );
+        },
+      );
     }
 
     initViewer();

@@ -78,7 +78,5 @@ export async function createNewFolder(folderName: string) {
 export async function uploadUserFile(fileBuffer: Buffer, fileName: string) {
   const fileData = await uploadFile(fileBuffer, encodeURIComponent(fileName));
   const { objectId } = fileData;
-  const translatedFile = await translateObject(objectId);
-  const { urn } = translatedFile;
-  return { urn };
+  return { objectId };
 }

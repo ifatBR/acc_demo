@@ -5,17 +5,19 @@ import { useState } from "react";
 
 interface ViewerModalProps {
   fileName: string | null;
-  browseUrn: string | null;
+  urn: string | null;
   setUrn: (value: string | null) => void;
+  isFetchingUrn: boolean;
 }
-export function ViewerModal({ fileName, browseUrn, setUrn }: ViewerModalProps) {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  return isLoading ? (
-    <Loader />
-  ) : (
+export function ViewerModal({
+  fileName,
+  urn,
+  setUrn,
+  isFetchingUrn,
+}: ViewerModalProps) {
+  return (
     <Dialog.Root
-      open={!!browseUrn && !isLoading}
+      open={!!urn || isFetchingUrn}
       onOpenChange={({ open }) => {
         if (!open) {
           setUrn(null);
@@ -32,8 +34,8 @@ export function ViewerModal({ fileName, browseUrn, setUrn }: ViewerModalProps) {
                 <CloseButton size="sm" />
               </Dialog.CloseTrigger>
             </Dialog.Header>
-            <Dialog.Body>
-              <ApsViewer urn={browseUrn} setIsLoading={setIsLoading} />
+            <Dialog.Body position="relative" mb="80px">
+              {isFetchingUrn ? <Loader /> : <ApsViewer urn={urn} />}
             </Dialog.Body>
           </Dialog.Content>
         </Dialog.Positioner>

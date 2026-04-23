@@ -5,12 +5,11 @@ import type { TreeCollection } from "@ark-ui/react/collection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBucketObjects, deleteObjectById } from "@/api/bucket";
 import type { BucketObject } from "@/api/bucket";
-import { createFolder, uploadFile } from "@/api/project";
+import { createFolder, getUrnToView, uploadFile } from "@/api/project";
 import { UploadFileModal } from "@/components/UploadFileModal";
 import { ViewerModal } from "./components/ViewerModal";
 import { CreateItemDialog } from "../../components/CreateItemDialog";
 import { DeleteModal } from "@/components/DeleteModal";
-import { Buffer } from "buffer";
 import { ProjectTree } from "./components/ProjectTree";
 import { BodyText, SectionTitle } from "@/components/Typography";
 import { Button } from "@/components/Button";
@@ -144,16 +143,19 @@ export function BrowserPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [nodeToDelete, setNodeToDelete] = useState<BrowserNode | null>(null);
   const [nodeForUpload, setNodeForUpload] = useState<BrowserNode | null>(null);
+  const [isFetchingUrn, setIsFetchingUrn] = useState<boolean>(false);
 
   const collection = buildCollection(
     objects ? parseBucketObjects(objects) : [],
   );
 
-  const viewItem = (node: BrowserNode) => {
+  const viewItem = async (node: BrowserNode) => {
     if (!node.objectId) return;
-    const encodedUrn = Buffer.from(node.objectId).toString("base64");
+    setIsFetchingUrn(true);
+    const { urn: urnToView } = await getUrnToView({ objectId: node.objectId });
     setPreviewFileName(node.label);
-    setUrn(encodedUrn);
+    setIsFetchingUrn(false);
+    setUrn(urnToView);
   };
 
   const deleteNode = async (node: BrowserNode) => {
@@ -177,7 +179,7 @@ export function BrowserPage() {
     const fileName = nodeForUpload
       ? `${nodeForUpload.value}/${file.name}`
       : file.name;
-    console.log("fileName:", fileName);
+
     await uploadFile(formData, fileName);
     queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
   };
@@ -218,8 +220,9 @@ export function BrowserPage() {
           />
           <ViewerModal
             fileName={previewFileName}
-            browseUrn={urn}
+            urn={urn}
             setUrn={setUrn}
+            isFetchingUrn={isFetchingUrn}
           />
           <DeleteModal
             isOpen={!!nodeToDelete}
