@@ -8,6 +8,7 @@ import type { BucketObject } from "@/api/bucket";
 import { createProject } from "@/api/project";
 import { ViewerModal } from "./components/ViewerModal";
 import { CreateProjectDialog } from "./components/CreateProjectDialog";
+import { DeleteModal } from "@/components/DeleteModal";
 import { Buffer } from "buffer";
 import { BrowserTree } from "./components/BrowserTree";
 import { BodyText, SectionTitle } from "@/components/Typography";
@@ -148,6 +149,7 @@ export function BrowserPage() {
   const [urn, setUrn] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [nodeToDelete, setNodeToDelete] = useState<BrowserNode | null>(null);
 
   const collection = buildCollection(
     objects ? parseBucketObjects(objects) : [],
@@ -164,6 +166,14 @@ export function BrowserPage() {
     const objectKeys = resolveObjectKeys(node);
     await Promise.all(objectKeys.map(deleteObjectById));
     queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
+  };
+
+  const handleDeleteRequest = (node: BrowserNode) => setNodeToDelete(node);
+
+  const handleDeleteConfirm = async () => {
+    if (!nodeToDelete) return;
+    await deleteNode(nodeToDelete);
+    setNodeToDelete(null);
   };
 
   const createNewProject = async (name: string) => {
@@ -195,9 +205,15 @@ export function BrowserPage() {
       <BrowserTree
         collection={collection}
         onFileClick={viewItem}
-        onDelete={deleteNode}
+        onDelete={handleDeleteRequest}
       />
       <ViewerModal fileName={previewFileName} browseUrn={urn} setUrn={setUrn} />
+      <DeleteModal
+        isOpen={!!nodeToDelete}
+        msg={`Are you sure you want to delete the ${nodeToDelete?.nodeType}: ${nodeToDelete?.label}?`}
+        onDelete={handleDeleteConfirm}
+        onClose={() => setNodeToDelete(null)}
+      />
     </Box>
   ) : (
     <Flex h="100vh" align="center" justify="center" direction="column">
