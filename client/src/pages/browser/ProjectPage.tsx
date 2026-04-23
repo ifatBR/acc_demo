@@ -5,12 +5,13 @@ import type { TreeCollection } from "@ark-ui/react/collection";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBucketObjects, deleteObjectById } from "@/api/bucket";
 import type { BucketObject } from "@/api/bucket";
-import { createProject } from "@/api/project";
+import { createFolder, uploadFile } from "@/api/project";
+import { UploadFileModal } from "@/components/UploadFileModal";
 import { ViewerModal } from "./components/ViewerModal";
-import { CreateProjectDialog } from "./components/CreateProjectDialog";
+import { CreateItemDialog } from "../../components/CreateItemDialog";
 import { DeleteModal } from "@/components/DeleteModal";
 import { Buffer } from "buffer";
-import { BrowserTree } from "./components/BrowserTree";
+import { ProjectTree } from "./components/ProjectTree";
 import { BodyText, SectionTitle } from "@/components/Typography";
 import { Button } from "@/components/Button";
 import { Plus } from "lucide-react";
@@ -31,27 +32,27 @@ export type BrowserNode = {
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
 function parseBucketObjects(objects: BucketObject[]): BrowserNode[] {
-  type ProjectEntry = {
+  type RootFolderEntry = {
     folders: Map<string, BrowserNode[]>;
     files: BrowserNode[];
   };
 
-  const projectMap = new Map<string, ProjectEntry>();
+  const rootFolderMap = new Map<string, RootFolderEntry>();
 
   for (const obj of objects) {
     const parts = obj.objectKey.split("/");
-    const projectName = parts[0];
+    const rootFolderName = parts[0];
 
-    if (!projectMap.has(projectName)) {
-      projectMap.set(projectName, { folders: new Map(), files: [] });
+    if (!rootFolderMap.has(rootFolderName)) {
+      rootFolderMap.set(rootFolderName, { folders: new Map(), files: [] });
     }
-    const project = projectMap.get(projectName)!;
+    const rootFolder = rootFolderMap.get(rootFolderName)!;
 
     if (parts.length === 2) {
-      // file directly inside the project: <project>/<file>
+      // file directly inside the folder: <rootFolder>/<file>
       const fileName = parts[1];
       if (fileName !== ".placeholder") {
-        project.files.push({
+        rootFolder.files.push({
           value: obj.objectKey,
           label: fileName,
           nodeType: "file",
@@ -59,14 +60,14 @@ function parseBucketObjects(objects: BucketObject[]): BrowserNode[] {
         });
       }
     } else if (parts.length === 3) {
-      // file inside a folder: <project>/<folder>/<file>
+      // file inside a folder: <rootFolder>/<folder>/<file>
       const folderName = parts[1];
       const fileName = parts[2];
-      if (!project.folders.has(folderName)) {
-        project.folders.set(folderName, []);
+      if (!rootFolder.folders.has(folderName)) {
+        rootFolder.folders.set(folderName, []);
       }
       if (fileName !== ".placeholder") {
-        project.folders.get(folderName)!.push({
+        rootFolder.folders.get(folderName)!.push({
           value: obj.objectKey,
           label: fileName,
           nodeType: "file",
@@ -76,28 +77,28 @@ function parseBucketObjects(objects: BucketObject[]): BrowserNode[] {
     }
   }
 
-  // Build the tree: project nodes containing folder nodes and/or file nodes
-  return Array.from(projectMap.entries()).map(([projectName, data]) => {
-    const projectChildren: BrowserNode[] = [];
+  // Build the tree: folder nodes containing folder nodes and/or file nodes
+  return Array.from(rootFolderMap.entries()).map(([rootFolderName, data]) => {
+    const rootFolderChildren: BrowserNode[] = [];
 
     for (const [folderName, folderFiles] of data.folders) {
       // Folder node — label is just the folder name, value is a unique path key
-      projectChildren.push({
-        value: `${projectName}/${folderName}`,
+      rootFolderChildren.push({
+        value: `${rootFolderName}/${folderName}`,
         label: folderName,
         nodeType: "folder",
         children: folderFiles,
       });
     }
 
-    // Direct files under the project
-    projectChildren.push(...data.files);
+    // Direct files under the head folder
+    rootFolderChildren.push(...data.files);
 
     return {
-      value: projectName,
-      label: projectName,
+      value: rootFolderName,
+      label: rootFolderName,
       nodeType: "folder",
-      children: projectChildren,
+      children: rootFolderChildren,
     };
   });
 }
@@ -142,6 +143,7 @@ export function BrowserPage() {
   const [previewFileName, setPreviewFileName] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [nodeToDelete, setNodeToDelete] = useState<BrowserNode | null>(null);
+  const [nodeForUpload, setNodeForUpload] = useState<BrowserNode | null>(null);
 
   const collection = buildCollection(
     objects ? parseBucketObjects(objects) : [],
@@ -168,8 +170,20 @@ export function BrowserPage() {
     setNodeToDelete(null);
   };
 
-  const createNewProject = async (name: string) => {
-    await createProject({ projectName: name });
+  const handleUploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const fileName = nodeForUpload
+      ? `${nodeForUpload.value}/${file.name}`
+      : file.name;
+    console.log("fileName:", fileName);
+    await uploadFile(formData, fileName);
+    queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
+  };
+
+  const createNewFolder = async (name: string) => {
+    await createFolder({ folderName: name });
     queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
     setIsCreateOpen(false);
   };
@@ -192,36 +206,52 @@ export function BrowserPage() {
     );
   }
 
-  return objects?.length ? (
-    <Box h="full">
-      <BrowserTree
-        collection={collection}
-        onFileClick={viewItem}
-        onDelete={handleDeleteRequest}
-      />
-      <ViewerModal fileName={previewFileName} browseUrn={urn} setUrn={setUrn} />
-      <DeleteModal
-        isOpen={!!nodeToDelete}
-        msg={`Are you sure you want to delete the ${nodeToDelete?.nodeType}: ${nodeToDelete?.label}?`}
-        onDelete={handleDeleteConfirm}
-        onClose={() => setNodeToDelete(null)}
-      />
-    </Box>
-  ) : (
-    <Flex h="100vh" align="center" justify="center" direction="column">
-      <SectionTitle>No projects created yet</SectionTitle>
-      <BodyText secondary>
-        Click on the button below to add a new project
-      </BodyText>
-      <Button mt={SPACING[4]} onClick={() => setIsCreateOpen(true)}>
-        <Plus />
-        New Project
-      </Button>
-      <CreateProjectDialog
+  return (
+    <Box>
+      {objects?.length ? (
+        <Box h="full">
+          <ProjectTree
+            collection={collection}
+            onFileClick={viewItem}
+            onDelete={handleDeleteRequest}
+            onUploadFile={(node) => setNodeForUpload(node)}
+          />
+          <ViewerModal
+            fileName={previewFileName}
+            browseUrn={urn}
+            setUrn={setUrn}
+          />
+          <DeleteModal
+            isOpen={!!nodeToDelete}
+            msg={`Are you sure you want to delete the ${nodeToDelete?.nodeType}: ${nodeToDelete?.label}?`}
+            onDelete={handleDeleteConfirm}
+            onClose={() => setNodeToDelete(null)}
+          />
+          <UploadFileModal
+            isOpen={!!nodeForUpload}
+            title={`Upload a file to ${nodeForUpload?.label}`}
+            uploadFile={handleUploadFile}
+            onClose={() => setNodeForUpload(null)}
+          />
+        </Box>
+      ) : (
+        <Flex h="100vh" align="center" justify="center" direction="column">
+          <SectionTitle>This project is empty</SectionTitle>
+          <BodyText secondary>
+            Click on the button below to add a new folder
+          </BodyText>
+          <Button mt={SPACING[4]} onClick={() => setIsCreateOpen(true)}>
+            <Plus />
+            New Folder
+          </Button>
+        </Flex>
+      )}
+      <CreateItemDialog
+        itemName="folder"
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onConfirm={createNewProject}
+        onConfirm={createNewFolder}
       />
-    </Flex>
+    </Box>
   );
 }

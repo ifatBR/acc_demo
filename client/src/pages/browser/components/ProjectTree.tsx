@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, TreeView, type TreeCollection } from "@chakra-ui/react";
-import type { BrowserNode, BrowserNodeType } from "../BrowserPage";
+import type { BrowserNode, BrowserNodeType } from "../ProjectPage";
 import { Folder, FileText } from "lucide-react";
 import { NodeMenu } from "./NodeMenu";
 import { COLORS } from "@/styles/designTokens";
@@ -15,17 +15,19 @@ function NodeIcon({ type }: { type: BrowserNodeType }) {
   return <Icon size={14} />;
 }
 
-interface BrowserTreeProps {
+interface ProjectTreeProps {
   collection: TreeCollection<BrowserNode>;
   onFileClick: (node: BrowserNode) => void;
   onDelete: (node: BrowserNode) => void;
+  onUploadFile: (node: BrowserNode) => void;
 }
 
-export function BrowserTree({
+export function ProjectTree({
   collection,
   onFileClick,
   onDelete,
-}: BrowserTreeProps) {
+  onUploadFile,
+}: ProjectTreeProps) {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   return (
@@ -55,7 +57,11 @@ export function BrowserTree({
                       <TreeView.BranchText>{node.label}</TreeView.BranchText>
                     </TreeView.BranchTrigger>
                     <Box visibility={isHovered ? "visible" : "hidden"}>
-                      <NodeMenu node={node} onDelete={onDelete} />
+                      <NodeMenu
+                        node={node}
+                        onDelete={onDelete}
+                        onUploadFile={onUploadFile}
+                      />
                     </Box>
                   </TreeView.BranchControl>
                 );
@@ -76,7 +82,11 @@ export function BrowserTree({
                   <NodeIcon type={node.nodeType} />
                   <TreeView.ItemText flex="1">{node.label}</TreeView.ItemText>
                   <Box visibility={isHovered ? "visible" : "hidden"}>
-                    <NodeMenu node={node} onDelete={onDelete} />
+                    <NodeMenu
+                      node={node}
+                      onDelete={onDelete}
+                      onUploadFile={onUploadFile}
+                    />
                   </Box>
                 </TreeView.Item>
               );

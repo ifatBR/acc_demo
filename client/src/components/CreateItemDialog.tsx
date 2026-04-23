@@ -5,12 +5,14 @@ import { Button } from "@/components/Button";
 import { COLORS, SHADOWS, SPACING } from "@/styles/designTokens";
 
 interface CreateProjectDialogProps {
+  itemName: string;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (name: string) => void;
 }
 
-export function CreateProjectDialog({
+export function CreateItemDialog({
+  itemName,
   isOpen,
   onClose,
   onConfirm,
@@ -48,7 +50,7 @@ export function CreateProjectDialog({
             bg={COLORS.bg.elevated}
           >
             <Dialog.Header>
-              <Dialog.Title>Create new project</Dialog.Title>
+              <Dialog.Title>{`Create new ${itemName}`}</Dialog.Title>
               <Dialog.CloseTrigger asChild>
                 <CloseButton size="sm" />
               </Dialog.CloseTrigger>

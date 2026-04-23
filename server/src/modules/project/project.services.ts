@@ -69,14 +69,14 @@ export async function getManifest(urn: string) {
   }
 }
 
-export async function createNewProject(projectName: string) {
+export async function createNewFolder(folderName: string) {
   const filePath = path.resolve(__dirname, "../../assets/.placeholder");
   const fileBuffer = await readFile(filePath);
-  return await uploadFile(fileBuffer, projectName);
+  return await uploadFile(fileBuffer, encodeURIComponent(folderName));
 }
 
 export async function uploadUserFile(fileBuffer: Buffer, fileName: string) {
-  const fileData = await uploadFile(fileBuffer, fileName);
+  const fileData = await uploadFile(fileBuffer, encodeURIComponent(fileName));
   const { objectId } = fileData;
   const translatedFile = await translateObject(objectId);
   const { urn } = translatedFile;

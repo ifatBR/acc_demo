@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import {
-  createNewProject,
+  createNewFolder,
   getManifest,
   translateObject,
   uploadUserFile,
@@ -17,32 +17,39 @@ export async function projectRoutes(app: FastifyInstance) {
     return getManifest(urn);
   });
 
-  app.post<{ Body: { projectName: string } }>("/", async (req, reply) => {
+  app.post<{ Body: { projectName: string } }>("/folder", async (req, reply) => {
     const { projectName } = req.body;
 
     if (!projectName) {
       return reply.code(400).send({ error: "Project name missing" });
     }
 
-    return createNewProject(projectName);
+    return createNewFolder(projectName);
   });
 
   app.post<{ Body: { fileName: string } }>("/file", async (req, reply) => {
-    const file = await req.file({
+    const parts = await req.parts({
       limits: {
         fileSize: 100 * 1024 * 1024,
       },
     });
-    const fileName = (file?.fields?.fileName as { value: string } | undefined)
-      ?.value;
+    let fileBuffer: Buffer | null = null;
+    let fileName = "";
 
-    if (!file) {
+    for await (const part of parts) {
+      if (part.type === "file") {
+        fileBuffer = await part.toBuffer();
+      } else if (part.fieldname === "fileName") {
+        fileName = String(part.value);
+      }
+    }
+    if (!fileBuffer) {
       return reply.code(400).send({ error: "No file uploaded" });
     }
     if (!fileName) {
       return reply.code(400).send({ error: "File name missing" });
     }
-    const fileBuffer = await file.toBuffer();
+    console.log("<<<<<fileName:", fileName);
     return uploadUserFile(fileBuffer, fileName);
   });
 }

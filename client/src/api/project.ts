@@ -1,6 +1,6 @@
 import { API_BASE } from "@/constants/routes";
 
-export const uploadModel = async (
+export const uploadFile = async (
   formData: FormData,
   fileName: string,
 ): Promise<{ urn: string }> => {
@@ -14,10 +14,10 @@ export const uploadModel = async (
   return resData;
 };
 
-export const createProject = async (params: {
-  projectName: string;
+export const createFolder = async (params: {
+  folderName: string;
 }): Promise<{ urn: string }> => {
-  const res = await fetch(`${API_BASE}${"project/"}`, {
+  const res = await fetch(`${API_BASE}${"project/folder"}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),

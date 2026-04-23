@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { AppLayout } from "../components/AppLayout";
 import { LandingPage } from "@/pages/landing/LandingPage";
-import { BrowserPage } from "@/pages/browser/BrowserPage";
+import { BrowserPage } from "@/pages/browser/ProjectPage";
 import { LayoutProvider } from "@/context/LayoutContext";
 import { RouteErrorPage } from "@/components/RouteErrorPage";
 
