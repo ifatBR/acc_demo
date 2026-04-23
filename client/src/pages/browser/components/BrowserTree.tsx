@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Box, Flex, TreeView, type TreeCollection } from "@chakra-ui/react";
+import { Box, TreeView, type TreeCollection } from "@chakra-ui/react";
 import type { BrowserNode, BrowserNodeType } from "../BrowserPage";
-import { Layers, Folder, FileText } from "lucide-react";
+import { Folder, FileText } from "lucide-react";
 import { NodeMenu } from "./NodeMenu";
 import { COLORS } from "@/styles/designTokens";
 
 const ICONS: Record<BrowserNodeType, React.ElementType> = {
-  project: Layers,
   folder: Folder,
   file: FileText,
 };

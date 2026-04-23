@@ -18,7 +18,7 @@ import { SPACING } from "@/styles/designTokens";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type BrowserNodeType = "project" | "folder" | "file";
+export type BrowserNodeType = "folder" | "file";
 
 export type BrowserNode = {
   value: string;
@@ -96,7 +96,7 @@ function parseBucketObjects(objects: BucketObject[]): BrowserNode[] {
     return {
       value: projectName,
       label: projectName,
-      nodeType: "project",
+      nodeType: "folder",
       children: projectChildren,
     };
   });
@@ -107,7 +107,7 @@ function buildCollection(nodes: BrowserNode[]): TreeCollection<BrowserNode> {
     rootNode: {
       value: "root",
       label: "Root",
-      nodeType: "project",
+      nodeType: "folder",
       children: nodes,
     },
   });
@@ -118,14 +118,6 @@ function resolveObjectKeys(node: BrowserNode): string[] {
     return [node.value];
   }
 
-  if (node.nodeType === "folder") {
-    if (!node.children || node.children.length === 0) {
-      return [node.value];
-    }
-    return node.children.map((child) => child.value);
-  }
-
-  // project
   if (!node.children || node.children.length === 0) {
     return [node.value];
   }
