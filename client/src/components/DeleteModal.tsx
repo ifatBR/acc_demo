@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
 import { Button } from "@/components/Button";
 import { COLORS, SPACING } from "@/styles/designTokens";
@@ -6,7 +7,7 @@ import { BodyText } from "./Typography";
 interface DeleteModalProps {
   isOpen: boolean;
   msg: string;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
   onClose: () => void;
 }
 
@@ -16,11 +17,27 @@ export function DeleteModal({
   onDelete,
   onClose,
 }: DeleteModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleClose = () => {
+    if (isDeleting) return;
+    onClose();
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onDelete();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <Dialog.Root
       open={isOpen}
       onOpenChange={({ open }) => {
-        if (!open) onClose();
+        if (!open) handleClose();
       }}
     >
       <Portal>
@@ -41,10 +58,10 @@ export function DeleteModal({
             </Dialog.Body>
             <Dialog.Footer>
               <Flex gap={SPACING[2]} justify="flex-end">
-                <Button variant="secondary" onClick={onClose}>
+                <Button variant="secondary" onClick={handleClose} disabled={isDeleting}>
                   Cancel
                 </Button>
-                <Button variant="danger" onClick={onDelete}>
+                <Button variant="danger" onClick={handleDelete} isLoading={isDeleting}>
                   Delete
                 </Button>
               </Flex>

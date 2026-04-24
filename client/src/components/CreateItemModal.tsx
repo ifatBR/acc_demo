@@ -11,7 +11,7 @@ interface CreateItemDialogProps {
   onConfirm: (name: string) => Promise<void>;
 }
 
-export function CreateItemDialog({
+export function CreateItemModal({
   itemName,
   isOpen,
   onClose,
@@ -84,12 +84,20 @@ export function CreateItemDialog({
                 error={validationError}
               />
               {validationError && (
-                <Text color={COLORS.semantic.error} fontSize="sm" mt={SPACING[1]}>
+                <Text
+                  color={COLORS.semantic.error}
+                  fontSize="sm"
+                  mt={SPACING[1]}
+                >
                   {validationError}
                 </Text>
               )}
               {submitError && (
-                <Text color={COLORS.semantic.error} fontSize="sm" mt={SPACING[2]}>
+                <Text
+                  color={COLORS.semantic.error}
+                  fontSize="sm"
+                  mt={SPACING[2]}
+                >
                   {submitError}
                 </Text>
               )}

@@ -8,7 +8,7 @@ import type { BucketObject } from "@/api/bucket";
 import { createFolder, getUrnToView, uploadFile } from "@/api/project";
 import { UploadFileModal } from "@/components/UploadFileModal";
 import { ViewerModal } from "./components/ViewerModal";
-import { CreateItemDialog } from "../../components/CreateItemDialog";
+import { CreateItemModal } from "../../components/CreateItemModal";
 import { DeleteModal } from "@/components/DeleteModal";
 import { ProjectTree } from "./components/ProjectTree";
 import { BodyText, PageTitle, SectionTitle } from "@/components/Typography";
@@ -329,7 +329,7 @@ export function ProjectPage() {
           <AddFolderBtn setIsCreateOpen={setIsCreateOpen} />
         </Flex>
       )}
-      <CreateItemDialog
+      <CreateItemModal
         itemName="folder"
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
