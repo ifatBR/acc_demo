@@ -1,7 +1,14 @@
 import { useState } from "react";
-import { Box, TreeView, type TreeCollection } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Spinner,
+  Text,
+  TreeView,
+  type TreeCollection,
+} from "@chakra-ui/react";
 import type { BrowserNode, BrowserNodeType } from "../ProjectPage";
-import { Folder, FileText } from "lucide-react";
+import { Folder, FileText, FolderKanban } from "lucide-react";
 import { NodeMenu } from "./NodeMenu";
 import { COLORS } from "@/styles/designTokens";
 
@@ -20,6 +27,8 @@ interface ProjectTreeProps {
   onFileClick: (node: BrowserNode) => void;
   onDelete: (node: BrowserNode) => void;
   onUploadFile: (node: BrowserNode) => void;
+  expandedValues: string[];
+  onExpandedChange: (vals: string[]) => void;
 }
 
 export function ProjectTree({
@@ -27,16 +36,37 @@ export function ProjectTree({
   onFileClick,
   onDelete,
   onUploadFile,
+  expandedValues,
+  onExpandedChange,
 }: ProjectTreeProps) {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   return (
     <Box p={4} overflowY="auto" h="full" w="600px">
-      <TreeView.Root collection={collection}>
+      <TreeView.Root
+        collection={collection}
+        expandedValue={expandedValues}
+        onExpandedChange={({ expandedValue }) =>
+          onExpandedChange(expandedValue)
+        }
+      >
         <TreeView.Tree>
           <TreeView.Node<BrowserNode>
             indentGuide={<TreeView.BranchIndentGuide />}
             render={({ node, nodeState }) => {
+              if (node.isLoading) {
+                return (
+                  <TreeView.Item cursor="default" pointerEvents="none">
+                    <Flex align="center" gap={2} py={1}>
+                      <Spinner size="xs" />
+                      <Text fontSize="xs" color="gray.500">
+                        Uploading file...
+                      </Text>
+                    </Flex>
+                  </TreeView.Item>
+                );
+              }
+
               const isHovered = hoveredNodeId === node.value;
 
               if (nodeState.isBranch) {
@@ -53,8 +83,10 @@ export function ProjectTree({
                   >
                     <TreeView.BranchTrigger flex="1">
                       <TreeView.BranchIndicator />
-                      <NodeIcon type={node.nodeType} />
-                      <TreeView.BranchText>{node.label}</TreeView.BranchText>
+                      <FolderKanban />
+                      <TreeView.BranchText ml="10px">
+                        {node.label}
+                      </TreeView.BranchText>
                     </TreeView.BranchTrigger>
                     <Box visibility={isHovered ? "visible" : "hidden"}>
                       <NodeMenu

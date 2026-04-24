@@ -2,6 +2,9 @@ import { getApsToken } from "@modules/auth/auth.service";
 import { AUTODESK_BASIC_URL, AUTODEKS_APIS } from "../../apis/autodeskApis";
 import { formattedObjects } from "./bucket.domain";
 
+const PAGINATION = {
+  itemsCount: 50,
+};
 export async function uploadFile(fileBuffer: Buffer, fileName: string) {
   const accessToken = await getApsToken();
   const bucketKey = process.env.BUCKET_KEY;
@@ -95,7 +98,7 @@ export async function listObjects() {
   let res: Response;
   try {
     res = await fetch(
-      `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.OSS.listObjects(bucketKey)}`,
+      `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.OSS.listObjects(bucketKey)}?limit=${PAGINATION.itemsCount}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -113,7 +116,8 @@ export async function listObjects() {
 
   try {
     const { items } = await res.json();
-    return formattedObjects(items);
+    const formatted = formattedObjects(items);
+    return formatted.sort((a, b) => a.objectKey.localeCompare(b.objectKey));
   } catch {
     throw new Error("Invalid JSON in list objects response");
   }
@@ -133,6 +137,7 @@ export async function deleteObject(ObjectKey: string) {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          region: "EMEA",
         },
       },
     );

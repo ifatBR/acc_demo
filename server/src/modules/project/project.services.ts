@@ -6,7 +6,7 @@ import path from "node:path";
 
 export async function translateObject(objectId: string) {
   const accessToken = await getApsToken();
-  const urn = Buffer.from(objectId).toString("base64");
+  const urn = Buffer.from(objectId).toString("base64").replace(/=+$/, "");
 
   let res: Response;
   try {

@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CloseButton, Dialog, Flex, Portal, Text } from "@chakra-ui/react";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
 import { COLORS, SHADOWS, SPACING } from "@/styles/designTokens";
 
-interface CreateProjectDialogProps {
+interface CreateItemDialogProps {
   itemName: string;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (name: string) => void;
+  onConfirm: (name: string) => Promise<void>;
 }
 
 export function CreateItemDialog({
@@ -16,22 +16,40 @@ export function CreateItemDialog({
   isOpen,
   onClose,
   onConfirm,
-}: CreateProjectDialogProps) {
+}: CreateItemDialogProps) {
   const [name, setName] = useState("");
-  const [error, setError] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setName("");
+      setValidationError("");
+      setSubmitError("");
+    }
+  }, [isOpen]);
 
   const handleClose = () => {
-    setName("");
-    setError("");
+    if (isSubmitting) return;
     onClose();
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) {
-      setError("Please enter a project name");
+      setValidationError(`Please enter a ${itemName} name`);
       return;
     }
-    onConfirm(name.trim());
+    setValidationError("");
+    setSubmitError("");
+    setIsSubmitting(true);
+    try {
+      await onConfirm(name.trim());
+    } catch {
+      setSubmitError("Something went wrong, try again");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -57,21 +75,39 @@ export function CreateItemDialog({
             </Dialog.Header>
             <Dialog.Body>
               <Input
-                placeholder="project name"
+                placeholder={`${itemName} name`}
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  if (error) setError("");
+                  if (validationError) setValidationError("");
                 }}
-                error={error}
+                error={validationError}
               />
+              {validationError && (
+                <Text color={COLORS.semantic.error} fontSize="sm" mt={SPACING[1]}>
+                  {validationError}
+                </Text>
+              )}
+              {submitError && (
+                <Text color={COLORS.semantic.error} fontSize="sm" mt={SPACING[2]}>
+                  {submitError}
+                </Text>
+              )}
             </Dialog.Body>
             <Dialog.Footer>
               <Flex gap={SPACING[2]} justify="flex-end">
-                <Button variant="secondary" onClick={handleClose}>
+                <Button
+                  variant="secondary"
+                  onClick={handleClose}
+                  disabled={isSubmitting}
+                >
                   Discard
                 </Button>
-                <Button variant="primary" onClick={handleCreate}>
+                <Button
+                  variant="primary"
+                  onClick={handleCreate}
+                  isLoading={isSubmitting}
+                >
                   Create
                 </Button>
               </Flex>

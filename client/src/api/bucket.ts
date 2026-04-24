@@ -14,9 +14,12 @@ export const getBucketObjects = async (): Promise<BucketObject[]> => {
 };
 
 export const deleteObjectById = async (objectKey: string): Promise<void> => {
-  const res = await fetch(`${API_BASE}bucket/object/${objectKey}`, {
-    method: "DELETE",
-  });
+  const res = await fetch(
+    `${API_BASE}bucket/object/${encodeURIComponent(objectKey)}`,
+    {
+      method: "DELETE",
+    },
+  );
   if (!res.ok) {
     throw new Error(`Failed to delete "${objectKey}": ${res.status}`);
   }

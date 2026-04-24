@@ -1,27 +1,28 @@
 import { ApsViewer } from "@/components/ApsViewer";
 import { Loader } from "@/components/Loader";
-import { CloseButton, Dialog, Portal } from "@chakra-ui/react";
-import { useState } from "react";
+import { ErrorText } from "@/components/Typography";
+import { AbsoluteCenter, CloseButton, Dialog, Portal } from "@chakra-ui/react";
 
 interface ViewerModalProps {
   fileName: string | null;
   urn: string | null;
-  setUrn: (value: string | null) => void;
+  error: string | null;
   isFetchingUrn: boolean;
+  onClose: () => void;
 }
+
 export function ViewerModal({
   fileName,
   urn,
-  setUrn,
+  error,
   isFetchingUrn,
+  onClose,
 }: ViewerModalProps) {
   return (
     <Dialog.Root
-      open={!!urn || isFetchingUrn}
+      open={!!urn || isFetchingUrn || !!error}
       onOpenChange={({ open }) => {
-        if (!open) {
-          setUrn(null);
-        }
+        if (!open) onClose();
       }}
     >
       <Portal>
@@ -35,7 +36,13 @@ export function ViewerModal({
               </Dialog.CloseTrigger>
             </Dialog.Header>
             <Dialog.Body position="relative" mb="80px">
-              {isFetchingUrn ? <Loader /> : <ApsViewer urn={urn} />}
+              {isFetchingUrn && <Loader />}
+              {error && (
+                <AbsoluteCenter>
+                  <ErrorText>{error}</ErrorText>
+                </AbsoluteCenter>
+              )}
+              {urn && <ApsViewer urn={urn} />}
             </Dialog.Body>
           </Dialog.Content>
         </Dialog.Positioner>

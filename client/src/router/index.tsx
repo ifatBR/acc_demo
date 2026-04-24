@@ -2,7 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { AppLayout } from "../components/AppLayout";
 import { LandingPage } from "@/pages/landing/LandingPage";
-import { BrowserPage } from "@/pages/browser/ProjectPage";
+import { ProjectPage } from "@/pages/project/ProjectPage";
 import { LayoutProvider } from "@/context/LayoutContext";
 import { RouteErrorPage } from "@/components/RouteErrorPage";
 
@@ -18,7 +18,7 @@ const routerConfig = [
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to={ROUTES.LANDING} replace /> },
-      { path: ROUTES.BROWSER, element: <BrowserPage /> },
+      { path: ROUTES.BROWSER, element: <ProjectPage /> },
     ],
   },
 ];

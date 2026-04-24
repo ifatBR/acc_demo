@@ -12,23 +12,26 @@ export async function projectRoutes(app: FastifyInstance) {
     return translateObject(objectId);
   });
 
-  app.get<{ Params: { urn: string } }>("/manifest/:urn", async (req) => {
-    const { urn } = req.params;
+  app.post<{ Body: { urn: string } }>("/manifest", async (req, reply) => {
+    const { urn } = req.body;
+    if (!urn) {
+      return reply.code(400).send({ error: "URN name missing" });
+    }
     return getManifest(urn);
   });
 
-  app.post<{ Body: { projectName: string } }>("/folder", async (req, reply) => {
-    const { projectName } = req.body;
+  app.post<{ Body: { folderName: string } }>("/folder", async (req, reply) => {
+    const { folderName } = req.body;
 
-    if (!projectName) {
-      return reply.code(400).send({ error: "Project name missing" });
+    if (!folderName) {
+      return reply.code(400).send({ error: "Folder name missing" });
     }
 
-    return createNewFolder(projectName);
+    return createNewFolder(folderName);
   });
 
   app.post<{ Body: { fileName: string } }>("/file", async (req, reply) => {
-    const parts = await req.parts({
+    const parts = req.parts({
       limits: {
         fileSize: 100 * 1024 * 1024,
       },

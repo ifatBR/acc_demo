@@ -56,6 +56,7 @@ export function BodyText({
       fontSize={FONT_SIZES.base}
       fontWeight={FONT_WEIGHTS.regular}
       color={secondary ? COLORS.text.secondary : COLORS.text.primary}
+      whiteSpace="pre-line"
     >
       {children}
     </Text>
@@ -87,6 +88,7 @@ export function ErrorText({ children, bold }: ErorTextProps) {
       fontWeight={bold ? FONT_WEIGHTS.bold : FONT_WEIGHTS.regular}
       color={COLORS.semantic.error}
       mt={SPACING[2]}
+      whiteSpace="pre-line"
     >
       {children}
     </Text>

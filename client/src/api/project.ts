@@ -26,47 +26,67 @@ export const createFolder = async (params: {
   return resData;
 };
 
-export const translateFile = async (params: {
-  objectId: string;
-}): Promise<{ urn: string }> => {
+export const translateFile = async (
+  params: { objectId: string },
+  signal?: AbortSignal,
+): Promise<{ urn: string }> => {
   const res = await fetch(`${API_BASE}project/translate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
+    signal,
   });
   const resData = await res.json();
   return resData;
 };
 
-const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-async function pollManifest(urn: string) {
-  const maxTries = 20;
-  const delay = 2000; // 2s
-
-  for (let i = 0; i < maxTries; i++) {
-    const res = await fetch(`${API_BASE}project/manifest/${urn}`);
-    const data = await res.json();
-
-    if (data.status === "success") {
-      return data;
-    }
-
-    if (data.status === "failed") {
-      throw new Error("Translation failed");
-    }
-
-    await sleep(delay);
-  }
-
-  throw new Error("Timeout waiting for translation");
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timeout);
+        reject(new DOMException("Aborted", "AbortError"));
+      },
+      { once: true },
+    );
+  });
 }
 
-export const getUrnToView = async (params: {
-  objectId: string;
-}): Promise<{ urn: string }> => {
-  const { urn } = await translateFile(params);
+async function pollManifest(params: { urn: string }, signal?: AbortSignal) {
+  const maxTries = 20;
+  const delay = 2000;
+
+  for (let i = 0; i < maxTries; i++) {
+    const res = await fetch(`${API_BASE}project/manifest`, {
+      method: "POST",
+      headers: { "content-Type": "application/json" },
+      body: JSON.stringify(params),
+      signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to view file`);
+    }
+
+    const data = await res.json();
+
+    if (data.status === "success") return data;
+    if (data.status === "failed") throw new Error("Translation failed");
+
+    await sleep(delay, signal);
+  }
+
+  throw new Error("File still uploading.\nTry again later.");
+}
+
+export const getUrnToView = async (
+  params: { objectId: string },
+  signal?: AbortSignal,
+): Promise<{ urn: string }> => {
+  const { urn } = await translateFile(params, signal);
   if (!urn) throw new Error("Failed to fetch URN");
-  await pollManifest(urn);
+  await pollManifest({ urn }, signal);
   return { urn };
 };

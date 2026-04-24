@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Box, Flex, Spinner, Text } from "@chakra-ui/react";
 import { createTreeCollection } from "@ark-ui/react/collection";
 import type { TreeCollection } from "@ark-ui/react/collection";
@@ -11,10 +11,9 @@ import { ViewerModal } from "./components/ViewerModal";
 import { CreateItemDialog } from "../../components/CreateItemDialog";
 import { DeleteModal } from "@/components/DeleteModal";
 import { ProjectTree } from "./components/ProjectTree";
-import { BodyText, SectionTitle } from "@/components/Typography";
-import { Button } from "@/components/Button";
-import { Plus } from "lucide-react";
-import { SPACING } from "@/styles/designTokens";
+import { BodyText, PageTitle, SectionTitle } from "@/components/Typography";
+import { SHADOWS } from "@/styles/designTokens";
+import { AddFolderBtn } from "./components/AddFolderBtn";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,6 +25,7 @@ export type BrowserNode = {
   nodeType: BrowserNodeType;
   objectId?: string;
   children?: BrowserNode[];
+  isLoading?: boolean;
 };
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
@@ -102,6 +102,35 @@ function parseBucketObjects(objects: BucketObject[]): BrowserNode[] {
   });
 }
 
+function injectLoadingNode(
+  nodes: BrowserNode[],
+  targetValue: string,
+): BrowserNode[] {
+  return nodes.map((node) => {
+    if (node.value === targetValue) {
+      return {
+        ...node,
+        children: [
+          ...(node.children ?? []),
+          {
+            value: "",
+            label: "Uploading file...",
+            nodeType: "file" as const,
+            isLoading: true,
+          },
+        ],
+      };
+    }
+    if (node.children) {
+      return {
+        ...node,
+        children: injectLoadingNode(node.children, targetValue),
+      };
+    }
+    return node;
+  });
+}
+
 function buildCollection(nodes: BrowserNode[]): TreeCollection<BrowserNode> {
   return createTreeCollection<BrowserNode>({
     rootNode: {
@@ -126,7 +155,7 @@ function resolveObjectKeys(node: BrowserNode): string[] {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function BrowserPage() {
+export function ProjectPage() {
   const queryClient = useQueryClient();
 
   const {
@@ -140,22 +169,52 @@ export function BrowserPage() {
 
   const [urn, setUrn] = useState<string | null>(null);
   const [previewFileName, setPreviewFileName] = useState<string | null>(null);
+  const [urnError, setUrnError] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [nodeToDelete, setNodeToDelete] = useState<BrowserNode | null>(null);
   const [nodeForUpload, setNodeForUpload] = useState<BrowserNode | null>(null);
+  const [expandedValues, setExpandedValues] = useState<string[]>([]);
+  const [uploadingFolderValue, setUploadingFolderValue] = useState<
+    string | null
+  >(null);
   const [isFetchingUrn, setIsFetchingUrn] = useState<boolean>(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
+  const parsedNodes = objects ? parseBucketObjects(objects) : [];
   const collection = buildCollection(
-    objects ? parseBucketObjects(objects) : [],
+    uploadingFolderValue
+      ? injectLoadingNode(parsedNodes, uploadingFolderValue)
+      : parsedNodes,
   );
 
   const viewItem = async (node: BrowserNode) => {
     if (!node.objectId) return;
-    setIsFetchingUrn(true);
-    const { urn: urnToView } = await getUrnToView({ objectId: node.objectId });
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setPreviewFileName(node.label);
-    setIsFetchingUrn(false);
-    setUrn(urnToView);
+    setIsFetchingUrn(true);
+    setUrn(null);
+    setUrnError(null);
+    try {
+      const { urn: urnToView } = await getUrnToView(
+        { objectId: node.objectId },
+        controller.signal,
+      );
+      setUrn(urnToView);
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      setUrnError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setIsFetchingUrn(false);
+    }
+  };
+
+  const handleViewerClose = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    setUrn(null);
+    setUrnError(null);
   };
 
   const deleteNode = async (node: BrowserNode) => {
@@ -173,21 +232,35 @@ export function BrowserPage() {
   };
 
   const handleUploadFile = async (file: File) => {
+    const uploadNode = nodeForUpload;
+    if (!uploadNode) return;
+
+    // Expand and show spinner immediately, before the network call
+    setUploadingFolderValue(uploadNode.value);
+    setExpandedValues((prev) => {
+      const next = new Set(prev);
+      next.add(uploadNode.value);
+      const parts = uploadNode.value.split("/");
+      if (parts.length > 1) next.add(parts[0]);
+      return Array.from(next);
+    });
+
     const formData = new FormData();
     formData.append("file", file);
+    await uploadFile(formData, `${uploadNode.value}/${file.name}`);
 
-    const fileName = nodeForUpload
-      ? `${nodeForUpload.value}/${file.name}`
-      : file.name;
-
-    await uploadFile(formData, fileName);
-    queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
+    await queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
+    setUploadingFolderValue(null);
   };
 
   const createNewFolder = async (name: string) => {
     await createFolder({ folderName: name });
     queryClient.invalidateQueries({ queryKey: ["bucketObjects"] });
     setIsCreateOpen(false);
+  };
+
+  const getDeleteMessage = () => {
+    return `Are you sure you want to delete the ${nodeToDelete?.nodeType}: ${nodeToDelete?.label}?${nodeToDelete?.nodeType === "folder" ? "\nAll the content of this folder will be deleted with it." : ""}`;
   };
 
   if (isLoading) {
@@ -210,6 +283,13 @@ export function BrowserPage() {
 
   return (
     <Box>
+      <Flex p="20px" justify="space-between" align="center" shadow={SHADOWS.sm}>
+        <PageTitle>Project 1</PageTitle>
+        <AddFolderBtn
+          setIsCreateOpen={setIsCreateOpen}
+          {...{ variant: "secondary" }}
+        />
+      </Flex>
       {objects?.length ? (
         <Box h="full">
           <ProjectTree
@@ -217,16 +297,19 @@ export function BrowserPage() {
             onFileClick={viewItem}
             onDelete={handleDeleteRequest}
             onUploadFile={(node) => setNodeForUpload(node)}
+            expandedValues={expandedValues}
+            onExpandedChange={setExpandedValues}
           />
           <ViewerModal
             fileName={previewFileName}
             urn={urn}
-            setUrn={setUrn}
+            error={urnError}
             isFetchingUrn={isFetchingUrn}
+            onClose={handleViewerClose}
           />
           <DeleteModal
             isOpen={!!nodeToDelete}
-            msg={`Are you sure you want to delete the ${nodeToDelete?.nodeType}: ${nodeToDelete?.label}?`}
+            msg={getDeleteMessage()}
             onDelete={handleDeleteConfirm}
             onClose={() => setNodeToDelete(null)}
           />
@@ -243,10 +326,7 @@ export function BrowserPage() {
           <BodyText secondary>
             Click on the button below to add a new folder
           </BodyText>
-          <Button mt={SPACING[4]} onClick={() => setIsCreateOpen(true)}>
-            <Plus />
-            New Folder
-          </Button>
+          <AddFolderBtn setIsCreateOpen={setIsCreateOpen} />
         </Flex>
       )}
       <CreateItemDialog

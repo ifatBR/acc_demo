@@ -1,6 +1,7 @@
-import { CloseButton, Dialog, Flex, Portal, Text } from "@chakra-ui/react";
+import { CloseButton, Dialog, Flex, Portal } from "@chakra-ui/react";
 import { Button } from "@/components/Button";
 import { COLORS, SPACING } from "@/styles/designTokens";
+import { BodyText } from "./Typography";
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -9,7 +10,12 @@ interface DeleteModalProps {
   onClose: () => void;
 }
 
-export function DeleteModal({ isOpen, msg, onDelete, onClose }: DeleteModalProps) {
+export function DeleteModal({
+  isOpen,
+  msg,
+  onDelete,
+  onClose,
+}: DeleteModalProps) {
   return (
     <Dialog.Root
       open={isOpen}
@@ -31,7 +37,7 @@ export function DeleteModal({ isOpen, msg, onDelete, onClose }: DeleteModalProps
               </Dialog.CloseTrigger>
             </Dialog.Header>
             <Dialog.Body>
-              <Text>{msg}</Text>
+              <BodyText>{msg}</BodyText>
             </Dialog.Body>
             <Dialog.Footer>
               <Flex gap={SPACING[2]} justify="flex-end">
