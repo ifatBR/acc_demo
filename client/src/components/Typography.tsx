@@ -48,6 +48,7 @@ export function BodyText({
   children,
   align,
   secondary = false,
+  ...rest
 }: BodyTextProps) {
   return (
     <Text
@@ -57,6 +58,7 @@ export function BodyText({
       fontWeight={FONT_WEIGHTS.regular}
       color={secondary ? COLORS.text.secondary : COLORS.text.primary}
       whiteSpace="pre-line"
+      {...rest}
     >
       {children}
     </Text>
@@ -79,7 +81,7 @@ export function Caption({ children }: ChildrenProps) {
 interface ErorTextProps extends ChildrenProps {
   bold?: boolean;
 }
-export function ErrorText({ children, bold }: ErorTextProps) {
+export function ErrorText({ children, bold, ...rest }: ErorTextProps) {
   return (
     <Text
       role="alert"
@@ -89,6 +91,7 @@ export function ErrorText({ children, bold }: ErorTextProps) {
       color={COLORS.semantic.error}
       mt={SPACING[2]}
       whiteSpace="pre-line"
+      {...rest}
     >
       {children}
     </Text>

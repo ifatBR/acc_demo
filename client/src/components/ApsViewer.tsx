@@ -10,14 +10,16 @@ import "@/styles/css/ViewerButton.scss";
 interface ApsViewerProps {
   urn: string | null;
   onError?: (err?: string) => void;
+  onViewerReady?: (viewer: Autodesk.Viewing.GuiViewer3D) => void;
+  onFilterToggle?: () => void;
 }
 
-export function ApsViewer({ urn, onError }: ApsViewerProps) {
+export function ApsViewer({ urn, onError, onViewerReady, onFilterToggle }: ApsViewerProps) {
   const [showFish, setShowFish] = useState<boolean>(false);
   const { isCollapsed } = useLayout();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const viewerRef = useRef<any>(null);
+  const viewerRef = useRef<Autodesk.Viewing.GuiViewer3D>(null);
   const toolbarCleanupRef = useRef<(() => void) | null>(null);
 
   const onClickBtn = () => {
@@ -49,7 +51,7 @@ export function ApsViewer({ urn, onError }: ApsViewerProps) {
           if (!viewer) return;
           viewer.start();
 
-          toolbarCleanupRef.current = setupViewerToolbar(viewer, onClickBtn);
+          toolbarCleanupRef.current = setupViewerToolbar(viewer, onClickBtn, onFilterToggle ?? (() => {}));
 
           window.Autodesk.Viewing.Document.load(
             `urn:${urn}`,
@@ -60,6 +62,12 @@ export function ApsViewer({ urn, onError }: ApsViewerProps) {
             (errCode: number, errMsg: string) => {
               console.error("Viewer load error:", errCode, errMsg);
             },
+          );
+
+          viewer.addEventListener(
+            window.Autodesk.Viewing.GEOMETRY_LOADED_EVENT,
+            () => onViewerReady?.(viewer),
+            { once: true },
           );
         },
       );

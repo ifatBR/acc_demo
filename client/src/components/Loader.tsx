@@ -1,13 +1,11 @@
-import { COLORS } from "@/styles/designTokens";
-import { Box, Flex, Spinner } from "@chakra-ui/react";
+import { Flex, Spinner } from "@chakra-ui/react";
+import { BodyText } from "./Typography";
 
 export function Loader() {
   return (
     <Flex direction="column" justify="center" align="center" h="100%">
       <Spinner size="lg" />
-      <Box color={COLORS.text.inverse} mt="40px">
-        Loading...
-      </Box>
+      <BodyText {...{ mt: "40px" }}>Loading...</BodyText>
     </Flex>
   );
 }

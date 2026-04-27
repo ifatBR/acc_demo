@@ -57,7 +57,7 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 async function pollManifest(params: { urn: string }, signal?: AbortSignal) {
   const maxTries = 20;
   const delay = 2000;
-
+  let progress;
   for (let i = 0; i < maxTries; i++) {
     const res = await fetch(`${API_BASE}project/manifest`, {
       method: "POST",
@@ -74,11 +74,14 @@ async function pollManifest(params: { urn: string }, signal?: AbortSignal) {
 
     if (data.status === "success") return data;
     if (data.status === "failed") throw new Error("Translation failed");
+    progress = data.progress;
 
     await sleep(delay, signal);
   }
 
-  throw new Error("File still uploading.\nTry again later.");
+  throw new Error(
+    `Model view still generating.\nTry again later.\n${progress || ""}`,
+  );
 }
 
 export const getUrnToView = async (

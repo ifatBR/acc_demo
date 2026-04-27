@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ApsViewer } from "@/components/ApsViewer";
 import { Loader } from "@/components/Loader";
 import { ErrorText } from "@/components/Typography";
 import { AbsoluteCenter, CloseButton, Dialog, Portal } from "@chakra-ui/react";
+import { ModelFilterMenu } from "./ModelFilterMenu";
 
 interface ViewerModalProps {
   fileName: string | null;
@@ -18,11 +20,22 @@ export function ViewerModal({
   isFetchingUrn,
   onClose,
 }: ViewerModalProps) {
+  const [viewer, setViewer] = useState<Autodesk.Viewing.GuiViewer3D | null>(
+    null,
+  );
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+
+  const handleClose = () => {
+    setViewer(null);
+    setIsFilterMenuOpen(false);
+    onClose();
+  };
+
   return (
     <Dialog.Root
       open={!!urn || isFetchingUrn || !!error}
       onOpenChange={({ open }) => {
-        if (!open) onClose();
+        if (!open) handleClose();
       }}
     >
       <Portal>
@@ -39,10 +52,19 @@ export function ViewerModal({
               {isFetchingUrn && <Loader />}
               {error && (
                 <AbsoluteCenter>
-                  <ErrorText>{error}</ErrorText>
+                  <ErrorText {...{ textAlign: "center" }}>{error}</ErrorText>
                 </AbsoluteCenter>
               )}
-              {urn && <ApsViewer urn={urn} />}
+              {urn && (
+                <ApsViewer
+                  urn={urn}
+                  onViewerReady={setViewer}
+                  onFilterToggle={() => setIsFilterMenuOpen((p) => !p)}
+                />
+              )}
+              {viewer && (
+                <ModelFilterMenu viewer={viewer} visible={isFilterMenuOpen} />
+              )}
             </Dialog.Body>
           </Dialog.Content>
         </Dialog.Positioner>

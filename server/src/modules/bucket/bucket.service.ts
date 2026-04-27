@@ -1,6 +1,7 @@
 import { getApsToken } from "@modules/auth/auth.service";
 import { AUTODESK_BASIC_URL, AUTODEKS_APIS } from "../../apis/autodeskApis";
 import { formattedObjects } from "./bucket.domain";
+import { translateObject } from "@modules/project/project.services";
 
 const PAGINATION = {
   itemsCount: 50,
@@ -76,14 +77,15 @@ export async function uploadFile(fileBuffer: Buffer, fileName: string) {
   } catch (err) {
     throw new Error(`Network error completing upload: ${err}`);
   }
-
   if (!completeRes.ok) {
     const body = await completeRes.text().catch(() => "");
     throw new Error(`Failed to complete upload: ${completeRes.status} ${body}`);
   }
 
   try {
-    return await completeRes.json();
+    const result = await completeRes.json();
+    translateObject(result?.objectId);
+    return result;
   } catch {
     throw new Error("Invalid JSON in complete upload response");
   }

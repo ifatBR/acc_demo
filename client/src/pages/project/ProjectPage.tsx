@@ -285,10 +285,14 @@ export function ProjectPage() {
     <Box>
       <Flex p="20px" justify="space-between" align="center" shadow={SHADOWS.sm}>
         <PageTitle>Project 1</PageTitle>
-        <AddFolderBtn
-          setIsCreateOpen={setIsCreateOpen}
-          {...{ variant: "secondary" }}
-        />
+        {objects?.length ? (
+          <AddFolderBtn
+            setIsCreateOpen={setIsCreateOpen}
+            {...{ variant: "secondary" }}
+          />
+        ) : (
+          <></>
+        )}
       </Flex>
       {objects?.length ? (
         <Box h="full">
