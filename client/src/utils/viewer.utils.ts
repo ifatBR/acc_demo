@@ -1,3 +1,5 @@
+import { FaLessThanEqual } from "react-icons/fa";
+
 const ButtonState = {
   ACTIVE: 0,
   INACTIVE: 1,
@@ -65,8 +67,7 @@ export function setupViewerToolbar(
     if (!container) return;
     sectionAxisClasses.forEach(
       (cls) =>
-        ["section-y", "section-x", "section-z"].includes(cls) &&
-        container.classList.remove(cls),
+        sectionAxisClasses.includes(cls) && container.classList.remove(cls),
     );
     if (index >= 0) {
       container.classList.add(sectionAxisClasses[index]);
@@ -93,6 +94,10 @@ export function setupViewerToolbar(
   };
 
   const activateSectionPlane = async (index: number) => {
+    if (sectionActive) {
+      deactivateSection();
+      return;
+    }
     sectionActive = true;
     sectionSubBtns.forEach((b, i) =>
       b.setState(i === index ? ButtonState.ACTIVE : ButtonState.INACTIVE),

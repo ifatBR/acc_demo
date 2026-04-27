@@ -61,13 +61,19 @@ async function pollManifest(params: { urn: string }, signal?: AbortSignal) {
   for (let i = 0; i < maxTries; i++) {
     const res = await fetch(`${API_BASE}project/manifest`, {
       method: "POST",
-      headers: { "content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
       signal,
     });
 
+    if (res.status === 404) {
+      const err: any = new Error("Manifest not found");
+      err.status = 404;
+      throw err;
+    }
+
     if (!res.ok) {
-      throw new Error(`Failed to view file`);
+      throw new Error(`Failed to get manifest: ${res.status}`);
     }
 
     const data = await res.json();
@@ -84,12 +90,26 @@ async function pollManifest(params: { urn: string }, signal?: AbortSignal) {
   );
 }
 
+function objectIdToUrn(objectId: string) {
+  return btoa(objectId).replace(/=+$/, "");
+}
+
 export const getUrnToView = async (
   params: { objectId: string },
   signal?: AbortSignal,
 ): Promise<{ urn: string }> => {
-  const { urn } = await translateFile(params, signal);
-  if (!urn) throw new Error("Failed to fetch URN");
+  const urn = objectIdToUrn(params.objectId);
+
+  try {
+    await pollManifest({ urn }, signal);
+
+    return { urn };
+  } catch (err: any) {
+    if (err.status !== 404) throw err;
+  }
+
+  await translateFile(params, signal);
   await pollManifest({ urn }, signal);
+
   return { urn };
 };
