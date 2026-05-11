@@ -8,7 +8,7 @@ import { ROUTES } from "@/constants/routes";
 export function LandingPage() {
   const navigate = useNavigate();
   const onStart = async () => {
-    navigate(ROUTES.BROWSER);
+    navigate(ROUTES.PROJECT);
   };
   return (
     <Flex minH="100vh" align="center" justify="center" bg={COLORS.bg.base}>

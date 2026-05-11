@@ -18,7 +18,7 @@ const routerConfig = [
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <Navigate to={ROUTES.LANDING} replace /> },
-      { path: ROUTES.BROWSER, element: <ProjectPage /> },
+      { path: ROUTES.PROJECT, element: <ProjectPage /> },
     ],
   },
 ];

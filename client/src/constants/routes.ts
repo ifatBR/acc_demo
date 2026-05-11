@@ -1,6 +1,6 @@
 export const ROUTES = {
   VIEWER: "/viewer",
-  BROWSER: "/browser",
+  PROJECT: "/project",
   LANDING: "/landing",
 } as const;
 

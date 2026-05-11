@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Box, Flex, NativeSelect, Spinner } from "@chakra-ui/react";
 import { Button } from "@/components/Button";
-import { Caption, ErrorText } from "@/components/Typography";
-import { COLORS, RADII, SHADOWS, SPACING } from "@/styles/designTokens";
+import { BodyText, Caption, ErrorText } from "@/components/Typography";
+import {
+  BORDER_WIDTHS,
+  COLORS,
+  RADII,
+  SHADOWS,
+  SPACING,
+} from "@/styles/designTokens";
 import {
   type FilterOptions,
   type FilterPropName,
@@ -36,6 +42,7 @@ export function ModelFilterMenu({ viewer, visible }: ModelFilterMenuProps) {
   const [isLoadingDependent, setIsLoadingDependent] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [noMatch, setNoMatch] = useState(false);
+  const [matchCount, setMatchCount] = useState(0);
 
   useEffect(() => {
     setIsLoadingCategories(true);
@@ -94,6 +101,8 @@ export function ModelFilterMenu({ viewer, visible }: ModelFilterMenuProps) {
       setNoMatch(true);
       return;
     }
+    setMatchCount(matching.length);
+
     highlightDbIds(viewer, matching);
     setIsHighlighted(true);
   };
@@ -206,6 +215,17 @@ export function ModelFilterMenu({ viewer, visible }: ModelFilterMenuProps) {
           >
             Clear Filtering
           </Button>
+          {matchCount ? (
+            <Box
+              borderTop={`${BORDER_WIDTHS.sm} solid ${COLORS.border.default}`}
+            >
+              <BodyText {...{ mt: "15px" }}>
+                {matchCount} elements found
+              </BodyText>
+            </Box>
+          ) : (
+            <></>
+          )}
         </Flex>
       )}
     </Box>

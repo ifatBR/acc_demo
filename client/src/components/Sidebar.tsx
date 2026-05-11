@@ -33,7 +33,7 @@ interface NavItemDef {
 }
 
 const NAV_ITEMS: NavItemDef[] = [
-  { label: "Browser", to: ROUTES.BROWSER, Icon: FolderTree },
+  { label: "Project", to: ROUTES.PROJECT, Icon: FolderTree },
   { label: "Viewer", to: ROUTES.VIEWER, Icon: Binoculars },
 ];
 
