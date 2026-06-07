@@ -10,7 +10,8 @@ export async function bucketRoutes(app: FastifyInstance) {
         fileSize: 100 * 1024 * 1024,
       },
     });
-    const { fileName } = req.body;
+
+    const fileName = file?.filename;
 
     if (!file) {
       return reply.code(400).send({ error: "No file uploaded" });

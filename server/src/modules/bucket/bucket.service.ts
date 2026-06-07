@@ -11,6 +11,40 @@ export async function uploadFile(fileBuffer: Buffer, fileName: string) {
   const bucketKey = process.env.BUCKET_KEY;
   if (!bucketKey) throw new Error("Missing bucket key");
 
+  let bucketsRes: Response;
+  try {
+    bucketsRes = await fetch(
+      `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.OSS.listBuckets}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+          region: "EMEA",
+        },
+      },
+    );
+  } catch (err) {
+    throw new Error(`Network error listing buckets: ${err}`);
+  }
+
+  if (!bucketsRes.ok) {
+    const body = await bucketsRes.text().catch(() => "");
+    throw new Error(`Failed to list buckets: ${bucketsRes.status} ${body}`);
+  }
+
+  let bucketsData: { items: { bucketKey: string }[] };
+  try {
+    bucketsData = await bucketsRes.json();
+  } catch {
+    throw new Error("Invalid JSON in list buckets response");
+  }
+
+  const bucketExists = bucketsData.items.some((b) => b.bucketKey === bucketKey);
+
+  if (!bucketExists) {
+    await createBucket(bucketKey, accessToken);
+  }
+
   let getRes: Response;
   try {
     getRes = await fetch(
@@ -88,6 +122,30 @@ export async function uploadFile(fileBuffer: Buffer, fileName: string) {
     return result;
   } catch {
     throw new Error("Invalid JSON in complete upload response");
+  }
+}
+
+async function createBucket(bucketKey: string, accessToken: string) {
+  let createRes: Response;
+  try {
+    createRes = await fetch(
+      `${AUTODESK_BASIC_URL}${AUTODEKS_APIS.OSS.createBucket}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ bucketKey, policyKey: "persistent" }),
+      },
+    );
+  } catch (err) {
+    throw new Error(`Network error creating bucket: ${err}`);
+  }
+
+  if (!createRes.ok) {
+    const body = await createRes.text().catch(() => "");
+    throw new Error(`Failed to create bucket: ${createRes.status} ${body}`);
   }
 }
 
